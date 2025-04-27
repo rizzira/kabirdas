@@ -1,0 +1,42 @@
+rom machine import Pin, PWM, TouchPad
+from time import ticks_ms, sleep
+
+# Setup servo motor
+servo = PWM(Pin(14), freq=50)  # Servo on GPIO14
+current_angle = 0
+
+def move_servo(angle):
+    # Map angle to servo duty cycle
+    duty = int((angle / 180) * 75) + 40
+    servo.duty(duty)
+
+# Setup capacitive touch sensor on GPIO4
+touch = TouchPad(Pin(4))
+
+# Double tap tracking
+last_tap_time = 0
+tap_count = 0
+
+while True:
+    touch_value = touch.read()
+    
+    # When touched (lower value = touched)
+    if touch_value < 300:  # adjust threshold if needed
+        now = ticks_ms()
+
+        if now - last_tap_time < 500:  # double tap within 0.5s
+            tap_count += 1
+        else:
+            tap_count = 1
+
+        last_tap_time = now
+
+        if tap_count == 2:
+            # Toggle servo angle between 0 and 90
+            current_angle = 90 if current_angle == 0 else 0
+            move_servo(current_angle)
+            print("👆 Double tap! Servo moved to", current_angle)
+            sleep(1)  # delay to prevent jitter
+            tap_count = 0
+
+    sleep(0.05)
