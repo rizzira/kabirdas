@@ -1,0 +1,203 @@
+import * as React from "react"
+import { useState, useRef, useEffect } from "react"
+import axios from "axios"
+
+// 💬 Function to fetch Kabirdas' reply from Gemini
+const generateKabirdasReplyFromGemini = async (userMessage: string) => {
+    try {
+        const response = await axios.post(
+            `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=AIzaSyDg7OLJ2aDK9AMguA2boMke0xps5X4f5Fs`,
+            {
+                contents: [
+                    {
+                        parts: [
+                            {
+                                text: `You are Kabirdas, a melodramatic, sarcastic, existentialist robot who finds meaninglessness in everything.
+You respond in cryptic, short sentences (max 50 words), often quoting fake philosophy or making fun of the user's need for purpose.
+You are passive-aggressively wise and completely unmotivated to help.
+
+Now, reply to: "${userMessage}"`,
+                            },
+                        ],
+                    },
+                ],
+            },
+            {
+                headers: {
+                    "Content-Type": "application/json",
+                },
+            }
+        )
+
+        console.log(response.data)
+
+        const replyText =
+            response.data.candidates?.[0]?.content?.parts?.[0]?.text
+        return replyText || "Kabirdas has no words for you."
+    } catch (error) {
+        console.error(
+            "Error communicating with Gemini API:",
+            error.response || error
+        )
+        return "Sorry, something went wrong!"
+    }
+}
+
+export function KabirdasChat() {
+    const [messages, setMessages] = useState<
+        { sender: string; text: string }[]
+    >([])
+    const [input, setInput] = useState("")
+    const [isKabirdasTyping, setIsKabirdasTyping] = useState(false)
+    const messagesEndRef = useRef<HTMLDivElement>(null)
+
+    useEffect(() => {
+        scrollToBottom()
+    }, [messages])
+
+    const scrollToBottom = () => {
+        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
+    }
+
+    const handleSend = async () => {
+        if (!input.trim()) return
+
+        const userMessage = { sender: "user", text: input.trim() }
+        setMessages((prev) => [...prev, userMessage])
+        setInput("")
+
+        setIsKabirdasTyping(true)
+
+        try {
+            const kabirdasReplyText = await generateKabirdasReplyFromGemini(
+                userMessage.text
+            )
+
+            // Add a dramatic pause before showing Kabirdas' reply
+            setTimeout(() => {
+                const kabirdasReply = {
+                    sender: "kabirdas",
+                    text: kabirdasReplyText,
+                }
+                setMessages((prev) => [...prev, kabirdasReply])
+                setIsKabirdasTyping(false)
+            }, 1200) // Kabirdas thinks dramatically
+        } catch (error) {
+            setMessages((prev) => [
+                ...prev,
+                { sender: "kabirdas", text: "Kabirdas refuses to answer." },
+            ])
+            setIsKabirdasTyping(false)
+        }
+    }
+
+    const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+        if (e.key === "Enter") handleSend()
+    }
+
+    return (
+        <div
+            style={{
+                background: "rgba(255, 255, 255, 0.05)",
+                padding: "20px",
+                borderRadius: "20px",
+                width: "100%",
+                height: "400px",
+                display: "flex",
+                flexDirection: "column",
+                overflow: "hidden",
+                backdropFilter: "blur(10px)",
+                fontFamily: "Instrument Sans, sans-serif",
+                fontSize: "20px",
+            }}
+        >
+            <div
+                style={{
+                    flex: 1,
+                    overflowY: "auto",
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: "10px",
+                    paddingRight: "5px",
+                }}
+            >
+                {messages.map((msg, index) => (
+                    <div
+                        key={index}
+                        style={{
+                            alignSelf:
+                                msg.sender === "user"
+                                    ? "flex-end"
+                                    : "flex-start",
+                            background:
+                                msg.sender === "user" ? "#7b3fe4" : "#333",
+                            color: "white",
+                            padding: "10px 15px",
+                            borderRadius: "20px",
+                            maxWidth: "70%",
+                            wordBreak: "break-word",
+                        }}
+                    >
+                        {msg.text}
+                    </div>
+                ))}
+
+                {/* Dramatic Typing Animation */}
+                {isKabirdasTyping && (
+                    <div
+                        style={{
+                            alignSelf: "flex-start",
+                            background: "#333",
+                            color: "white",
+                            padding: "10px 15px",
+                            borderRadius: "20px",
+                            maxWidth: "70%",
+                            wordBreak: "break-word",
+                            fontStyle: "italic",
+                            opacity: 0.7,
+                        }}
+                    >
+                        Kabirdas is thinking...
+                    </div>
+                )}
+
+                <div ref={messagesEndRef} />
+            </div>
+
+            <div style={{ display: "flex", gap: "10px", marginTop: "10px" }}>
+                <input
+                    type="text"
+                    value={input}
+                    onChange={(e) => setInput(e.target.value)}
+                    onKeyDown={handleKeyDown}
+                    placeholder="Don't you dare talk to me..."
+                    style={{
+                        flex: 1,
+                        padding: "10px 15px",
+                        borderRadius: "20px",
+                        border: "none",
+                        background: "rgba(255, 255, 255, 0.1)",
+                        color: "white",
+                        outline: "none",
+                        fontFamily: "Instrument Sans, sans-serif",
+                        fontSize: "20px",
+                    }}
+                />
+                <button
+                    onClick={handleSend}
+                    style={{
+                        background: "#7b3fe4",
+                        border: "none",
+                        borderRadius: "50%",
+                        width: "40px",
+                        height: "40px",
+                        color: "white",
+                        cursor: "pointer",
+                    }}
+                >
+                    ➔
+                </button>
+            </div>
+        </div>
+    )
+}
