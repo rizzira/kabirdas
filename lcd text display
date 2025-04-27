@@ -1,0 +1,23 @@
+from machine import Pin, I2C
+import time
+import lcd_api
+import i2c_lcd
+
+# Setup I2C
+i2c = I2C(0, scl=Pin(22), sda=Pin(21), freq=400000)  # adjust pins if needed
+
+# Setup LCD
+lcd = i2c_lcd.I2cLcd(i2c, 0x27, 2, 16)  # 0x27 is the default address for most I2C LCDs
+
+# Clear LCD
+lcd.clear()
+
+# Print message
+lcd.putstr("Hello Kabirdas!")
+
+# Blink text every 2 seconds
+while True:
+    lcd.clear()
+    time.sleep(1)
+    lcd.putstr("Hello Kabirdas!")
+    time.sleep(1)
