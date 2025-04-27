@@ -1,0 +1,35 @@
+import network
+import socket
+
+# Connect to Wi-Fi
+ssid = 'YOUR_SSID'
+password = 'YOUR_PASSWORD'
+wlan = network.WLAN(network.STA_IF)
+wlan.active(True)
+wlan.connect(ssid, password)
+
+while not wlan.isconnected():
+    pass
+
+print('Connected on', wlan.ifconfig()[0])
+
+# Basic HTTP server
+addr = socket.getaddrinfo('0.0.0.0', 80)[0][-1]
+s = socket.socket()
+s.bind(addr)
+s.listen(1)
+
+print('Listening on', addr)
+
+while True:
+    cl, addr = s.accept()
+    print('Client connected from', addr)
+    request = cl.recv(1024).decode()
+    
+    # Extract the message content (assume /?msg=...)
+    if 'GET /?msg=' in request:
+        msg = request.split('GET /?msg=')[1].split(' ')[0]
+        msg = msg.replace('%20', ' ')  # crude URL decoding
+
+        # Now you can use msg to display on LCD, control servo, etc.
+        print("Kabirdas said:", msg)
