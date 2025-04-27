@@ -1,0 +1,64 @@
+from machine import Pin, PWM, I2C, TouchPad
+import time
+import sys
+import select
+import lcd_api
+import i2c_lcd
+
+# Setup I2C for LCD
+i2c = I2C(0, scl=Pin(22), sda=Pin(21), freq=400000)
+lcd = i2c_lcd.I2cLcd(i2c, 0x27, 2, 16)  # (address, rows, cols)
+
+# Setup Servo Motor (on Pin 18)
+servo = PWM(Pin(18), freq=50)
+
+# Setup Capacitive Touch (Touch0 -> GPIO4)
+touch = TouchPad(Pin(4))
+
+# Function to move servo
+def move_servo():
+    # Move to 0 degrees
+    servo.duty(40)  # Approx 0 degrees
+    time.sleep(0.5)
+    # Move to 90 degrees
+    servo.duty(77)  # Approx 90 degrees
+    time.sleep(0.5)
+    # Move to 0 degrees again
+    servo.duty(40)
+    time.sleep(0.5)
+
+# Function to display text smartly
+def display_message(message):
+    lcd.clear()
+    if len(message) <= 32:
+        lcd.putstr(message)
+    else:
+        # Scroll long messages
+        for i in range(len(message) - 15):
+            lcd.clear()
+            lcd.putstr(message[i:i+16])
+            time.sleep(0.3)
+
+# Start with welcome message
+lcd.clear()
+lcd.putstr("Waiting for\nKabirdas...")
+
+print("ESP32 Ready!")
+
+# Main loop
+while True:
+    # Check capacitive touch
+    touch_val = touch.read()
+    if touch_val < 300:  # Adjust threshold if needed
+        print("Touched!")
+        move_servo()
+        lcd.clear()
+        lcd.putstr("Touched! Waiting.")
+
+    # Check for incoming serial messages
+    if sys.stdin in select.select([sys.stdin], [], [], 0)[0]:
+        incoming = sys.stdin.readline().strip()
+        print("Received from Serial:", incoming)
+
+        move_servo()  # Move servo when new message comes
+        display_message(incoming)
