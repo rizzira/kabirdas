@@ -1,0 +1,105 @@
+import network
+import socket
+from machine import Pin
+from time import sleep
+
+# Motor Driver A (M1 & M2)
+M1_IN1 = Pin(19, Pin.OUT)
+M1_IN2 = Pin(21, Pin.OUT)
+
+M2_IN1 = Pin(22, Pin.OUT)
+M2_IN2 = Pin(23, Pin.OUT)
+
+# Motor Driver B (M3 & M4)
+M3_IN1 = Pin(13, Pin.OUT)
+M3_IN2 = Pin(12, Pin.OUT)
+
+M4_IN1 = Pin(14, Pin.OUT)
+M4_IN2 = Pin(27, Pin.OUT)
+
+def stop():
+    for p in [M1_IN1, M1_IN2, M2_IN1, M2_IN2, M3_IN1, M3_IN2, M4_IN1, M4_IN2]:
+        p.off()
+
+def forward():
+    stop()
+    M1_IN1.on(); M1_IN2.off()
+    M2_IN1.on(); M2_IN2.off()
+    M3_IN1.on(); M3_IN2.off()
+    M4_IN1.on(); M4_IN2.off()
+
+def backward():
+    stop()
+    M1_IN1.off(); M1_IN2.on()
+    M2_IN1.off(); M2_IN2.on()
+    M3_IN1.off(); M3_IN2.on()
+    M4_IN1.off(); M4_IN2.on()
+
+def left():
+    stop()
+    M1_IN1.off(); M1_IN2.on()
+    M2_IN1.on(); M2_IN2.off()
+    M3_IN1.off(); M3_IN2.on()
+    M4_IN1.on(); M4_IN2.off()
+
+def right():
+    stop()
+    M1_IN1.on(); M1_IN2.off()
+    M2_IN1.off(); M2_IN2.on()
+    M3_IN1.on(); M3_IN2.off()
+    M4_IN1.off(); M4_IN2.on()
+
+# Wi-Fi Access Point
+ap = network.WLAN(network.AP_IF)
+ap.active(True)
+ap.config(essid="potato", password="topsecret")
+
+while not ap.active():
+    pass
+
+print('Access point created:', ap.ifconfig())
+
+# HTML for the control page
+html = """<!DOCTYPE html>
+<html>
+<head><title>ESP32 Robot</title></head>
+<body>
+<h2>ESP32 WiFi Robot</h2>
+<a href="/forward"><button>Forward</button></a>
+<a href="/backward"><button>Backward</button></a><br><br>
+<a href="/left"><button>Left</button></a>
+<a href="/right"><button>Right</button></a><br><br>
+<a href="/stop"><button>Stop</button></a>
+</body>
+</html>
+"""
+
+# Web server
+addr = socket.getaddrinfo('0.0.0.0', 80)[0][-1]
+s = socket.socket()
+s.bind(addr)
+s.listen(1)
+print('Listening on', addr)
+
+while True:
+    conn, addr = s.accept()
+    print('Got a connection from', addr)
+    request = conn.recv(1024)
+    request = str(request)
+
+    if '/forward' in request:
+        forward()
+    elif '/backward' in request:
+        backward()
+    elif '/left' in request:
+        left()
+    elif '/right' in request:
+        right()
+    elif '/stop' in request:
+        stop()
+
+    conn.send('HTTP/1.1 200 OK\n')
+    conn.send('Content-Type: text/html\n')
+    conn.send('Connection: close\n\n')
+    conn.sendall(html)
+    conn.close()
