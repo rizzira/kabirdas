@@ -6,7 +6,7 @@ import axios from "axios"
 const generateKabirdasReplyFromGemini = async (userMessage: string) => {
     try {
         const response = await axios.post(
-            `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=AIzaSyDg7OLJ2aDK9AMguA2boMke0xps5X4f5Fs`,
+            `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=YOUR API KEY`,
             {
                 contents: [
                     {
