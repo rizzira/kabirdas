@@ -1,0 +1,149 @@
+from machine import Pin
+from time import sleep, ticks_ms
+
+# Your LED and buzzer setup
+led = Pin(13, Pin.OUT)
+buzzer = Pin(12, Pin.OUT)
+
+# Capacitive touch sensor pin
+touch_sensor = Pin(14, Pin.IN)
+
+# Morse dictionary
+MORSE_CODE_DICT = {
+    'A': '.-', 'B': '-...', 'C': '-.-.', 'D': '-..',
+    'E': '.',  'F': '..-.', 'G': '--.',  'H': '....',
+    'I': '..', 'J': '.---', 'K': '-.-',  'L': '.-..',
+    'M': '--', 'N': '-.',   'O': '---',  'P': '.--.',
+    'Q': '--.-','R': '.-.', 'S': '...',  'T': '-',
+    'U': '..-', 'V': '...-', 'W': '.--', 'X': '-..-',
+    'Y': '-.--','Z': '--..', '1': '.----', '2': '..---',
+    '3': '...--','4': '....-', '5': '.....', '6': '-....',
+    '7': '--...', '8': '---..','9': '----.','0': '-----',
+    ' ': '/'
+}
+
+DOT = 0.2
+DASH = DOT * 3
+SYMBOL_GAP = DOT
+LETTER_GAP = DOT * 3
+WORD_GAP = DOT * 7
+
+def play_symbol(symbol):
+    if symbol == '.':
+        led.on(); buzzer.on(); sleep(DOT)
+    elif symbol == '-':
+        led.on(); buzzer.on(); sleep(DASH)
+    led.off(); buzzer.off(); sleep(SYMBOL_GAP)
+
+def text_to_morse(text):
+    return ' '.join(MORSE_CODE_DICT.get(char.upper(), '') for char in text)
+
+def play_morse(text):
+    morse = text_to_morse(text)
+    print("Morse:", morse)
+    for char in morse:
+        if char == '.': play_symbol('.')
+        elif char == '-': play_symbol('-')
+        elif char == ' ': sleep(LETTER_GAP)
+        elif char == '/': sleep(WORD_GAP)
+
+# 👇 Adjust this later to pull from Kabirdas
+response_text = "kabir says hi"
+
+# Detect 3 taps within time window
+def detect_triple_tap():
+    tap_count = 0
+    last_tap = ticks_ms()
+
+    while True:
+        if touch_sensor.value() == 0:  # Capacitive sensor is usually LOW when touched
+            now = ticks_ms()
+            if now - last_tap < 1000:
+                tap_count += 1
+            else:
+                tap_count = 1  # Restart if too slow
+            last_tap = now
+            print(f"TAP {tap_count}")
+            sleep(0.2)
+
+            if tap_count == 3:
+                print("🚨 Triple Tap Detected!")
+                play_morse(response_text)
+                tap_count = 0  # Reset for next time
+        sleep(0.05)
+
+# Run the triple tap loop
+detect_triple_tap()
+from machine import Pin
+from time import sleep, ticks_ms
+
+# Your LED and buzzer setup
+led = Pin(13, Pin.OUT)
+buzzer = Pin(12, Pin.OUT)
+
+# Capacitive touch sensor pin
+touch_sensor = Pin(14, Pin.IN)
+
+# Morse dictionary
+MORSE_CODE_DICT = {
+    'A': '.-', 'B': '-...', 'C': '-.-.', 'D': '-..',
+    'E': '.',  'F': '..-.', 'G': '--.',  'H': '....',
+    'I': '..', 'J': '.---', 'K': '-.-',  'L': '.-..',
+    'M': '--', 'N': '-.',   'O': '---',  'P': '.--.',
+    'Q': '--.-','R': '.-.', 'S': '...',  'T': '-',
+    'U': '..-', 'V': '...-', 'W': '.--', 'X': '-..-',
+    'Y': '-.--','Z': '--..', '1': '.----', '2': '..---',
+    '3': '...--','4': '....-', '5': '.....', '6': '-....',
+    '7': '--...', '8': '---..','9': '----.','0': '-----',
+    ' ': '/'
+}
+
+DOT = 0.2
+DASH = DOT * 3
+SYMBOL_GAP = DOT
+LETTER_GAP = DOT * 3
+WORD_GAP = DOT * 7
+
+def play_symbol(symbol):
+    if symbol == '.':
+        led.on(); buzzer.on(); sleep(DOT)
+    elif symbol == '-':
+        led.on(); buzzer.on(); sleep(DASH)
+    led.off(); buzzer.off(); sleep(SYMBOL_GAP)
+
+def text_to_morse(text):
+    return ' '.join(MORSE_CODE_DICT.get(char.upper(), '') for char in text)
+
+def play_morse(text):
+    morse = text_to_morse(text)
+    print("Morse:", morse)
+    for char in morse:
+        if char == '.': play_symbol('.')
+        elif char == '-': play_symbol('-')
+        elif char == ' ': sleep(LETTER_GAP)
+        elif char == '/': sleep(WORD_GAP)
+
+# 👇 Adjust this later to pull from Kabirdas
+response_text = "kabir says hi"
+
+# Detect 3 taps within time window
+def detect_triple_tap():
+    tap_count = 0
+    last_tap = ticks_ms()
+
+    while True:
+        if touch_sensor.value() == 0:  # Capacitive sensor is usually LOW when touched
+            now = ticks_ms()
+            if now - last_tap < 1000:
+                tap_count += 1
+            else:
+                tap_count = 1  # Restart if too slow
+            last_tap = now
+            print(f"TAP {tap_count}")
+            sleep(0.2)
+
+            if tap_count == 3:
+                print("🚨 Triple Tap Detected!")
+                play_morse(response_text)
+                tap_count = 0  # Reset for next time
+        sleep(0.05)
